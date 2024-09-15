@@ -10,7 +10,7 @@ const DocumentsPage = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
 
   const arraysEqual = (a1, a2) => {
-    return JSON.stringify(a1) != JSON.stringify(a2);
+    return JSON.stringify(a1) !== JSON.stringify(a2);
   };
 
   useEffect(() => {
@@ -20,7 +20,7 @@ const DocumentsPage = () => {
       localStorage.getItem("documents") === undefined ||
       localStorage.getItem("documents") === null
     ) {
-      localStorage.setItem("documents", []);
+      localStorage.setItem("documents", JSON.stringify([]));
     }
   }, []);
 
@@ -62,7 +62,7 @@ const DocumentsPage = () => {
     ) {
       setIsSaving(true);
       try {
-        const response = await fetch("/documents-post", {
+        await fetch("/documents-post", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -78,25 +78,18 @@ const DocumentsPage = () => {
     }
   };
 
-  const handleDragStart = (e, position) => {
-    e.dataTransfer.setData("position", position);
+  const handleDragStart = (e, index) => {
+    e.dataTransfer.setData("index", index); // Store the index of the dragged document
   };
 
-  const handleDrop = (e, targetPosition) => {
-    const draggedPosition = e.dataTransfer.getData("position");
-    const updatedDocuments = [...documents];
-    const draggedDocument = updatedDocuments.find(
-      (doc) => doc.position.toString() === draggedPosition
-    );
-    const targetDocument = updatedDocuments.find(
-      (doc) => doc.position === targetPosition
-    );
-    const draggedIndex = updatedDocuments.indexOf(draggedDocument);
-    const targetIndex = updatedDocuments.indexOf(targetDocument);
-    updatedDocuments[draggedIndex].position = targetPosition;
-    updatedDocuments[targetIndex].position = draggedPosition;
-    updatedDocuments.sort((a, b) => a.position - b.position);
-    setDocuments(updatedDocuments);
+  const handleDrop = (e, targetIndex) => {
+    const draggedIndex = parseInt(e.dataTransfer.getData("index"), 10); // Get the dragged index
+    if (draggedIndex !== targetIndex) {
+      const updatedDocuments = [...documents];
+      const [draggedDocument] = updatedDocuments.splice(draggedIndex, 1); // Remove the dragged document
+      updatedDocuments.splice(targetIndex, 0, draggedDocument); // Insert the dragged document at the drop target index
+      setDocuments(updatedDocuments); // Update the state
+    }
   };
 
   const openOverlay = (doc) => {
@@ -118,23 +111,21 @@ const DocumentsPage = () => {
 
   return (
     <div className="App">
-      {
-        <div className="last-saved">
-          {lastSaved
-            ? `Last saved: ${lastSaved.toLocaleTimeString()} (${elapsedTime} seconds ago)`
-            : `No data saved yet`}
-        </div>
-      }
+      <div className="last-saved">
+        {lastSaved
+          ? `Last saved: ${lastSaved.toLocaleTimeString()} (${elapsedTime} seconds ago)`
+          : `No data saved yet`}
+      </div>
       <div className="container">
         {documents &&
           documents.length &&
-          documents.map((document) => (
+          documents.map((document, index) => (
             <div
               key={document.type}
               className="card"
               draggable
-              onDragStart={(e) => handleDragStart(e, document.position)}
-              onDrop={(e) => handleDrop(e, document.position)}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
               onDragOver={(e) => e.preventDefault()}
               onClick={() => openOverlay(document)}
             >
