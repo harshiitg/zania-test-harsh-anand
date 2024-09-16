@@ -1,15 +1,14 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { SetupWorkerApi } from 'msw'; 
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
 
-async function deferRender(): Promise<SetupWorkerApi> {
-  const { worker } = await import('./mocks/browser');
+async function deferRender() {
+  const { worker } = await import("./mocks/browser");
   return worker.start();
 }
 
 deferRender().then(() => {
-  const rootElement = document.getElementById('root');
+  const rootElement = document.getElementById("root");
   if (rootElement) {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
