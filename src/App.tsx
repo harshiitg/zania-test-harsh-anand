@@ -1,7 +1,8 @@
+import React from 'react';
 import DocumentsPage from './components/DocumentsPage';
 import './index.css';
 
-function App() {
+const App: React.FC = () => {
   return (
     <>
       <DocumentsPage />
