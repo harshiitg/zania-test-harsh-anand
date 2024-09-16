@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, DragEvent, MouseEvent, KeyboardEvent } from "react";
 import "../index.css";
 
-const DocumentsPage = () => {
-  const [documents, setDocuments] = useState([]);
-  const [overlayVisible, setOverlayVisible] = useState(false);
-  const [overlayContent, setOverlayContent] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
+interface Document {
+  type: string;
+  thumbnail: string;
+  title: string;
+}
 
-  const arraysEqual = (a1, a2) => {
+const DocumentsPage: React.FC = () => {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [overlayVisible, setOverlayVisible] = useState<boolean>(false);
+  const [overlayContent, setOverlayContent] = useState<Document | null>(null);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
+
+  const arraysEqual = (a1: Document[], a2: Document[]): boolean => {
     return JSON.stringify(a1) !== JSON.stringify(a2);
   };
 
@@ -37,7 +43,7 @@ const DocumentsPage = () => {
     const interval = setInterval(() => {
       if (lastSaved) {
         const currentTime = new Date();
-        const difference = currentTime - lastSaved;
+        const difference = currentTime.getTime() - lastSaved.getTime();
         setElapsedTime(Math.floor(difference / 1000)); // Convert milliseconds to seconds
       }
     }, 1000);
@@ -54,11 +60,11 @@ const DocumentsPage = () => {
     }
   };
 
-  const saveDocuments = async (documents) => {
+  const saveDocuments = async (documents: Document[]) => {
     if (
       !isSaving &&
       (localStorage.getItem("documents") === "" ||
-        arraysEqual(documents, JSON.parse(localStorage.getItem("documents"))))
+        arraysEqual(documents, JSON.parse(localStorage.getItem("documents") || "[]")))
     ) {
       setIsSaving(true);
       try {
@@ -78,11 +84,11 @@ const DocumentsPage = () => {
     }
   };
 
-  const handleDragStart = (e, index) => {
-    e.dataTransfer.setData("index", index); // Store the index of the dragged document
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
+    e.dataTransfer.setData("index", index.toString()); // Store the index of the dragged document
   };
 
-  const handleDrop = (e, targetIndex) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>, targetIndex: number) => {
     const draggedIndex = parseInt(e.dataTransfer.getData("index"), 10); // Get the dragged index
     if (draggedIndex !== targetIndex) {
       const updatedDocuments = [...documents];
@@ -92,7 +98,7 @@ const DocumentsPage = () => {
     }
   };
 
-  const openOverlay = (doc) => {
+  const openOverlay = (doc: Document) => {
     setOverlayContent(doc);
     setOverlayVisible(true);
     document.addEventListener("keydown", closeOverlayOnEsc);
@@ -103,7 +109,7 @@ const DocumentsPage = () => {
     document.removeEventListener("keydown", closeOverlayOnEsc);
   };
 
-  const closeOverlayOnEsc = (event) => {
+  const closeOverlayOnEsc = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       closeOverlay();
     }
@@ -139,7 +145,7 @@ const DocumentsPage = () => {
             </div>
           ))}
       </div>
-      {overlayVisible && (
+      {overlayVisible && overlayContent && (
         <div className="overlay" onClick={closeOverlay}>
           <img
             src={overlayContent.thumbnail}
