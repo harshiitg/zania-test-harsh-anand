@@ -1,35 +1,27 @@
-import { rest } from 'msw';
-import { mock } from './mock';
+import { http, HttpResponse } from "msw";
+import { mock } from "./mock";
 
 const handlers = [
-  rest.get("/documents", (req, res, ctx) => {
+  http.get("/documents", () => {
     const storedDocuments = localStorage.getItem("documents")
-      ? JSON.parse(localStorage.getItem("documents") as string)
+      ? JSON.parse(localStorage.getItem("documents") || "[]")
       : [];
-      
     if (storedDocuments.length) {
-      return res(
-        ctx.status(200),
-        ctx.json({ data: storedDocuments })
-      );
+      return HttpResponse.json({ data: storedDocuments });
     } else {
-      return res(
-        ctx.status(200),
-        ctx.json({ data: mock })
-      );
+      return HttpResponse.json({ data: mock });
     }
   }),
 
-  rest.post("/documents-post", async (req, res, ctx) => {
-    const requestBody = await req.json();
+  http.post("/documents-post", async ({ request }) => {
+    const requestBody = await request.json();
     localStorage.setItem("documents", JSON.stringify(requestBody));
-    
-    return res(
-      ctx.status(201),
-      ctx.json({
+    return HttpResponse.json(
+      {
         documents: requestBody,
         createdAt: new Date().toLocaleString(),
-      })
+      },
+      { status: 201 }
     );
   }),
 ];
